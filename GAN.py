@@ -14,6 +14,7 @@ class GAN():
         self.list_tweets = dl.nettoyer_data(data)
         self.sequences, self.vocab_size = dl.tokenizer_data(self.list_tweets, self.tokenizer)
         self.batch_size = dl.max_tweet(self.sequences)
+        print(self.batch_size)
         self.X_train, self.y_train, self.nb_tweet = dl.preparer_data(self.sequences, self.vocab_size, self.batch_size)
 
     def modele_gan(self, generator, discriminator):
@@ -23,9 +24,7 @@ class GAN():
         x0 = Input(shape=(self.batch_size, 1))
         x1 = Input(shape=(self.batch_size,))
         x2 = generator([x0, x1])
-        print(x2[-1].shape)
         x3 = discriminator([x2, x1])
-        print(x3.shape)
         model = Model([x0, x1], x3)
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         print(model.summary())
@@ -50,13 +49,6 @@ class GAN():
 
         Epoch = 10
         nb=int(self.nb_tweet/2)
-
-        X = self.sequences[:nb]
-        X = pad_sequences(X, maxlen=self.batch_size, padding='post')
-        y = self.sequences[nb:]
-        y = pad_sequences(y, maxlen=self.batch_size, padding='post')
-        X_train = X.reshape(nb, self.batch_size, 1)
-        y_train = y.reshape(nb, self.batch_size, 1)
         real = np.ones(shape=(nb, 1))
         fake = np.zeros(shape=(nb, 1))
         # Build and compile the generator
@@ -71,7 +63,7 @@ class GAN():
             ###Train Discriminator##
             #######################
             # prepare real samples
-            [tweets, labels] = X_train, y_train
+            [tweets, labels] = self.X_train, self.y_train
             lab = labels[-1].reshape(1, self.batch_size, 1)
             noise = np.random.randint(self.vocab_size, size=(1, self.batch_size, 1))
 
@@ -120,4 +112,3 @@ if __name__ == '__main__':
     for i in range(0, len(twt)):
         ltw.append(twt[i].split())
     print('Blue score:',sentence_bleu(list_listword, ltw[0]))
-
